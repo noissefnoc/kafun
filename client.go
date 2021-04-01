@@ -149,7 +149,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 	reader := transform.NewReader(resp.Body, japanese.ShiftJIS.NewDecoder())
 	byteArray, err := ioutil.ReadAll(reader)
 	if err != nil {
-		xerrors.Errorf("cannot read response: %v", err)
+		return xerrors.Errorf("cannot read response: %v", err)
 	}
 
 	// APIレスポンスがValidなJSONではないので文字列置換で対応。
@@ -204,7 +204,7 @@ func (c *Client) Search(ctx context.Context, param *SearchParam) (SokuteiData, e
 	}
 
 	var response SokuteiData
-	if err := decodeBody(res, &response); err != nil {
+	if err = decodeBody(res, &response); err != nil {
 		return nil, err
 	}
 

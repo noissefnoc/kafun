@@ -50,7 +50,7 @@ APIクライアントライブラリとして使う場合、go.mod に追加し�
 
 などで実行する。
 
- */
+*/
 package kafun
 
 import (
@@ -84,7 +84,7 @@ var userAgent = fmt.Sprintf("KafunGoClient/%s (%s)", Version, runtime.Version())
 
 // Client は環境庁花粉観測システムAPIのクライアントを表す。
 type Client struct {
-	URL *url.URL
+	URL        *url.URL
 	HTTPClient *http.Client
 }
 
@@ -100,7 +100,7 @@ func NewClient(urlStr string) (*Client, error) {
 	}
 
 	return &Client{
-		URL: parsedURL,
+		URL:        parsedURL,
 		HTTPClient: http.DefaultClient,
 	}, nil
 }
@@ -111,7 +111,7 @@ func (c *Client) newRequest(
 	spath string,
 	params map[string]string,
 	body io.Reader,
-	) (*http.Request, error) {
+) (*http.Request, error) {
 	u := *c.URL
 	u.Path = path.Join(c.URL.Path, spath)
 
@@ -120,9 +120,9 @@ func (c *Client) newRequest(
 		q := u.Query()
 
 		for k, v := range params {
-			 if len(v) != 0 {
-				 q.Set(k, v)
-			 }
+			if len(v) != 0 {
+				q.Set(k, v)
+			}
 		}
 		u.RawQuery = q.Encode()
 	}
@@ -171,8 +171,8 @@ func (c *Client) Search(
 	endYM string,
 	todofukenCode string,
 	sokuteikyokuCode string,
-	) (SokuteiData, error) {
-	params :=make(map[string]string)
+) (SokuteiData, error) {
+	params := make(map[string]string)
 
 	if !yMPattern.MatchString(startYM) {
 		return nil, xerrors.New(fmt.Sprintf("invalid pattern Start_YM: %s. please specify yyyyMM", startYM))

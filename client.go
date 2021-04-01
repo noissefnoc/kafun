@@ -62,11 +62,10 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 	"golang.org/x/xerrors"
@@ -75,12 +74,16 @@ import (
 // DefaultURL は環境庁花粉観測システムAPIのベースURLを表す。
 const DefaultURL = "https://kafun.env.go.jp/hanako/api"
 
-// バリデーションのための正規表現。
-var yMPattern = regexp.MustCompile(`\d{6}`)
-var sokuteikyokuCodePattern = regexp.MustCompile(`\d{8}`)
-
 // APIリクエスト時のUser Agent文字列。
 var userAgent = fmt.Sprintf("KafunGoClient/%s (%s)", Version, runtime.Version())
+
+// SearchParam は検索APIのパラメータを表す。
+type SearchParam struct {
+	StartYM          string `validate:"required,numeric,len=6"`
+	EndYM            string `validate:"omitempty,numeric,len=6"`
+	TodofukenCode    string `validate:"required,numeric,gte=01,lte=47"`
+	SokuteikyokuCode string `validate:"omitempty"`
+}
 
 // Client は環境庁花粉観測システムAPIのクライアントを表す。
 type Client struct {
@@ -165,41 +168,22 @@ func decodeBody(resp *http.Response, out interface{}) error {
 }
 
 // Search は 環境庁花粉観測システムAPIの data_search API をコールするメソッド
-func (c *Client) Search(
-	ctx context.Context,
-	startYM string,
-	endYM string,
-	todofukenCode string,
-	sokuteikyokuCode string,
-) (SokuteiData, error) {
-	params := make(map[string]string)
+func (c *Client) Search(ctx context.Context, param *SearchParam) (SokuteiData, error) {
+	validate := validator.New()
+	err := validate.Struct(param)
 
-	if !yMPattern.MatchString(startYM) {
-		return nil, xerrors.New(fmt.Sprintf("invalid pattern Start_YM: %s. please specify yyyyMM", startYM))
+	if err != nil {
+		return nil, err
 	}
-	params["Start_YM"] = startYM
 
-	if len(endYM) > 0 && !yMPattern.MatchString(endYM) {
-		return nil, xerrors.New(fmt.Sprintf("invalid pattern End_YM: %s. please specify yyyyMM", endYM))
-	}
-	params["End_YM"] = endYM
-
-	todofukenInt, err := strconv.Atoi(todofukenCode)
-
-	if err != nil || 1 > todofukenInt || todofukenInt > 47 {
-		return nil, xerrors.Errorf("invalid pattern TDFKN_CD: %s. please specify 01 to 47: %v", endYM, err)
-	}
-	params["TDFKN_CD"] = todofukenCode
-
-	if len(sokuteikyokuCode) > 0 && !sokuteikyokuCodePattern.MatchString(sokuteikyokuCode) {
-		return nil, xerrors.New(
-			fmt.Sprintf("invalid pattern SKT_CD: %s. please specify 8 digits", sokuteikyokuCode),
-		)
-	}
-	params["SKT_CD"] = sokuteikyokuCode
+	query := make(map[string]string)
+	query["Start_YM"] = param.StartYM
+	query["End_YM"] = param.EndYM
+	query["TDFKN_CD"] = param.TodofukenCode
+	query["SKT_CD"] = param.SokuteikyokuCode
 
 	spath := fmt.Sprintf("/data_search")
-	req, err := c.newRequest(ctx, http.MethodGet, spath, params, nil)
+	req, err := c.newRequest(ctx, http.MethodGet, spath, query, nil)
 	if err != nil {
 		return nil, err
 	}

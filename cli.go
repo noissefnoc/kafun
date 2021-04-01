@@ -57,7 +57,7 @@ func (c *CLI) Run(args []string) int {
 		&sokuteikyokuCode,
 		"sokuteikyokuCode",
 		"",
-		"測定局コード",
+		"測定局コード。複数指定の場合はカンマ区切りで指定",
 	)
 
 	if err := flags.Parse(args[1:]); err != nil {
@@ -77,13 +77,14 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeInitializeError
 	}
 
-	response, err := client.Search(
-		context.Background(),
-		startYM,
-		endYM,
-		todofukenCode,
-		sokuteikyokuCode,
-	)
+	param := &SearchParam{
+		StartYM:          startYM,
+		EndYM:            endYM,
+		TodofukenCode:    todofukenCode,
+		SokuteikyokuCode: sokuteikyokuCode,
+	}
+
+	response, err := client.Search(context.Background(), param)
 	if err != nil {
 		fmt.Fprintf(
 			c.ErrStream,

@@ -153,15 +153,10 @@ func decodeBody(resp *http.Response, out interface{}) error {
 	}
 
 	// APIレスポンスがValidなJSONではないので文字列置換で対応。
-	// レスポンスのイメージは以下で、JSONのkey-valueがクォートされていない
-	// かつ、valueがない場合何も存在しない (今回は `null` に置換する)
-	// [{ KEY11: VALUE11, KEY12: VALUE12 }, { KEY21: VALUE21, KEY22: }]
+	// valueが数値型の場合でもクォートされる、が、null値のときに項目を削除する対応をしていないので
+	//　`null` に置換して存在しないものとして扱う
+	// [{ "KEY11": "VALUE11", "KEY12": "VALUE12" }, { "KEY21": "VALUE21", "KEY22": "" }]
 	str := string(byteArray)
-	str = strings.ReplaceAll(str, `{`, `{"`)
-	str = strings.ReplaceAll(str, `}`, `"}`)
-	str = strings.ReplaceAll(str, `:`, `":"`)
-	str = strings.ReplaceAll(str, `,`, `","`)
-	str = strings.ReplaceAll(str, `}","{`, `},{`)
 	str = strings.ReplaceAll(str, `""`, `null`)
 
 	return json.Unmarshal([]byte(str), out)

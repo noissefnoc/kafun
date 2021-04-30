@@ -43,7 +43,7 @@ type HourlySokuteiData struct {
 	AMeDASWindSpeed *int `json:"AMeDAS_WS,string"`
 
 	// 気温(度)
-	AMeDASTempature *float64 `json:"AMeDAS_TP,string"`
+	AMeDASTemperature *float64 `json:"AMeDAS_TP,string"`
 
 	// 降水量(mm)
 	AMeDASPrecipitation *int `json:"AMeDAS_PR,string"`

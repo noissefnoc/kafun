@@ -1,7 +1,7 @@
 // Copyright noissefnoc@gmail.com
 
 /*
-kafun は環境庁花粉観測システムAPIのクライアントです。
+Package kafun は環境庁花粉観測システムAPIのクライアントです。
 
 API Provider
 

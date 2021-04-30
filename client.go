@@ -1,7 +1,7 @@
 // Copyright noissefnoc@gmail.com
 
 /*
-kafun は環境庁花粉観測システムAPIのクライアントです。
+Package kafun は環境庁花粉観測システムAPIのクライアントです。
 
 API Provider
 
@@ -35,7 +35,7 @@ APIクライアントライブラリとして使う場合、go.mod に追加し�
 			"測定日時: %s%s, 気温: %f(度), 花粉量: %d(個/平方メートル)",
 			latestHourlySokuteiData.SokuteiNengappi,
 			latestHourlySokuteiData.SokuteiJikoku,
-			*(latestHourlySokuteiData.AMeDASTempature),
+			*(latestHourlySokuteiData.AMeDASTemperature),
 			*(latestHourlySokuteiData.KafunNum),
 		)
 	}

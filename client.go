@@ -23,7 +23,7 @@ APIクライアントライブラリとして使う場合、go.mod に追加し�
 	// NOTE: エラーハンドリング省略しているので、実利用のさいは適宜対応してください。
 	func main() {
 		// APIクライアントを
-		client, _ := kafun.NewClient(kafun.DefaultURL)
+		client, _ := kafun.NewClient(kafun.DefaultEndpoint)
 
 		// 2021-02から2021-03の東京都の新宿区役所の測定局のデータ取得を指定
 		response, _ := client.Search(context.Background, "202102", "202103", "13", "51320100")
@@ -71,8 +71,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// DefaultURL は環境庁花粉観測システムAPIのベースURLを表す。
-const DefaultURL = "https://kafun.env.go.jp/hanako/api"
+// DefaultEndpoint は環境庁花粉観測システムAPIのベースURLを表す。
+var DefaultEndpoint = "https://kafun.env.go.jp/hanako/api"
 
 // APIリクエスト時のUser Agent文字列。
 var userAgent = fmt.Sprintf("KafunGoClient/%s (%s)", Version, runtime.Version())
@@ -92,14 +92,14 @@ type Client struct {
 }
 
 // NewClient は新しいAPIクライアントを作成する。
-func NewClient(urlStr string) (*Client, error) {
-	if len(urlStr) == 0 {
-		urlStr = DefaultURL
+func NewClient(endpoint string) (*Client, error) {
+	if len(endpoint) == 0 {
+		endpoint = DefaultEndpoint
 	}
 
-	parsedURL, err := url.ParseRequestURI(urlStr)
+	parsedURL, err := url.ParseRequestURI(endpoint)
 	if err != nil {
-		return nil, xerrors.Errorf("failed to parse url: %s: %v", urlStr, err)
+		return nil, xerrors.Errorf("failed to parse url: %s: %v", endpoint, err)
 	}
 
 	return &Client{
@@ -111,12 +111,12 @@ func NewClient(urlStr string) (*Client, error) {
 func (c *Client) newRequest(
 	ctx context.Context,
 	method string,
-	spath string,
+	apiPath string,
 	params map[string]string,
 	body io.Reader,
 ) (*http.Request, error) {
 	u := *c.URL
-	u.Path = path.Join(c.URL.Path, spath)
+	u.Path = path.Join(c.URL.Path, apiPath)
 
 	// 値が空でない場合だけパラメータクエリを作る
 	if len(params) != 0 {
@@ -175,8 +175,7 @@ func (c *Client) Search(ctx context.Context, param *SearchParam) (SokuteiData, e
 	query["TDFKN_CD"] = param.TodofukenCode
 	query["SKT_CD"] = param.SokuteikyokuCode
 
-	spath := fmt.Sprintf("/data_search")
-	req, err := c.newRequest(ctx, http.MethodGet, spath, query, nil)
+	req, err := c.newRequest(ctx, http.MethodGet, "/data_search", query, nil)
 	if err != nil {
 		return nil, err
 	}

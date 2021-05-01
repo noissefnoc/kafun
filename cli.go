@@ -71,9 +71,9 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	// data_search API の実行
-	client, err := NewClient(DefaultURL)
+	client, err := NewClient(DefaultEndpoint)
 	if err != nil {
-		fmt.Fprintf(c.ErrStream, "failed to initialize API client with url=%s: %v\n", DefaultURL, err)
+		fmt.Fprintf(c.ErrStream, "failed to initialize API client with url=%s: %v\n", DefaultEndpoint, err)
 		return ExitCodeInitializeError
 	}
 

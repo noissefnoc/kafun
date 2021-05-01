@@ -8,10 +8,10 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	defaultURL, _ := url.Parse(DefaultURL)
+	defaultURL, _ := url.Parse(DefaultEndpoint)
 
 	type args struct {
-		urlStr string
+		endpoint string
 	}
 	tests := []struct {
 		name    string
@@ -22,7 +22,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "normal case: with default url",
 			args: args{
-				urlStr: DefaultURL,
+				endpoint: DefaultEndpoint,
 			},
 			want: &Client{
 				URL:        defaultURL,
@@ -33,7 +33,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "normal case: with empty url",
 			args: args{
-				urlStr: "",
+				endpoint: "",
 			},
 			want: &Client{
 				URL:        defaultURL,
@@ -44,7 +44,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "error case: with invalid url",
 			args: args{
-				urlStr: "hoge",
+				endpoint: "hoge",
 			},
 			want:    nil,
 			wantErr: true,
@@ -52,7 +52,7 @@ func TestNewClient(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewClient(tt.args.urlStr)
+			got, err := NewClient(tt.args.endpoint)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewClient() error = %v, wantErr %v", err, tt.wantErr)
 				return

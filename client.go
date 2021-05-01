@@ -131,7 +131,6 @@ func (c *Client) newRequest(
 	}
 
 	req, err := http.NewRequest(method, u.String(), body)
-
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +165,6 @@ func decodeBody(resp *http.Response, out interface{}) error {
 func (c *Client) Search(ctx context.Context, param *SearchParam) (SokuteiData, error) {
 	validate := validator.New()
 	err := validate.Struct(param)
-
 	if err != nil {
 		return nil, err
 	}

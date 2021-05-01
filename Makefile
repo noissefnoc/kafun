@@ -7,7 +7,7 @@ test: deps ## Run tests
 	go test ./...
 
 build: deps ## build binary
-	mkdir bin && go build -o bin/kafun cmd/kafun/main.go
+	if [ ! -d bin ]; then mkdir bin; fi && go build -o bin/kafun cmd/kafun/main.go
 
 clean:
 	rm -rf bin

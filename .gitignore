@@ -1,4 +1,6 @@
+# Editor or IDE setting directories
 .idea
 .vscode
 
-kafun
+# binary directory
+bin

@@ -63,7 +63,6 @@ import (
 	"net/url"
 	"path"
 	"runtime"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/text/encoding/japanese"
@@ -151,14 +150,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 		return xerrors.Errorf("cannot read response: %v", err)
 	}
 
-	// APIレスポンスがValidなJSONではないので文字列置換で対応。
-	// valueが数値型の場合でもクォートされる、が、null値のときに項目を削除する対応をしていないので
-	//　`null` に置換して存在しないものとして扱う
-	// [{ "KEY11": "VALUE11", "KEY12": "VALUE12" }, { "KEY21": "VALUE21", "KEY22": "" }]
-	str := string(byteArray)
-	str = strings.ReplaceAll(str, `""`, `null`)
-
-	return json.Unmarshal([]byte(str), out)
+	return json.Unmarshal(byteArray, out)
 }
 
 // Search は 環境庁花粉観測システムAPIの data_search API をコールするメソッド

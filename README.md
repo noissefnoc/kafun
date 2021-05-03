@@ -1,5 +1,7 @@
 # kafun
 
+[![GitHub Actions](https://github.com/noissefnoc/kafun/workflows/CI/badge.svg)](https://github.com/noissefnoc/kafun/actions?workflow=CI)
+
 Golang製の [環境庁花粉観測システムAPI](https://kafun.env.go.jp/apiManual) のクライアントです。
 
 **アルファ版なので様々な変更の可能性があります**

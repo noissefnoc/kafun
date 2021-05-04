@@ -140,8 +140,10 @@ func (c *Client) newRequest(
 	return req, nil
 }
 
-func decodeBody(resp *http.Response, out interface{}) error {
-	defer resp.Body.Close()
+func decodeBody(resp *http.Response, out interface{}) (err error) {
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+	}(resp.Body)
 
 	// APIレスポンスがShift-JISなので、Goで扱えるようにUTF-8変換する。
 	reader := transform.NewReader(resp.Body, japanese.ShiftJIS.NewDecoder())

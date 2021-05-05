@@ -15,36 +15,61 @@ import (
 	"golang.org/x/text/transform"
 )
 
-var sokuteiDataByteOmitOptional = []byte(`[{
-	"SKT_CD": "00000000",
-	"AMeDAS_CD": "00000",
-	"SKT_NNGP": "00000000",
-	"SKT_HH": "00",
-	"SKT_NM": "テスト観測所",
-	"SKT_TYPE": "0",
-	"TDFKN_CD": "00",
-	"TDFKN_NM": "テスト都道府県",
-	"SKCHSN_CD": "000000",
-	"SKCHSN_NM": "テスト市町村",
-	"KFN_NUM": "0",
-	"AMeDAS_WD": "00"
-}]`)
+var (
+	ctx             = context.Background()
+	defaultURL, _   = url.Parse(DefaultEndpoint)
+	fullQueryURL, _ = url.Parse(
+		DefaultEndpoint + "/search?End_YM=000001&SKT_CD=00000000&Start_YM=000000&TDFKN_CD=01",
+	)
+	omitQueryURL, _             = url.Parse(DefaultEndpoint + "/search?Start_YM=000000&TDFKN_CD=01")
+	sokuteiDataByteOmitOptional = []byte(`[{
+		"SKT_CD": "00000000",
+		"AMeDAS_CD": "00000",
+		"SKT_NNGP": "00000000",
+		"SKT_HH": "00",
+		"SKT_NM": "テスト観測所",
+		"SKT_TYPE": "0",
+		"TDFKN_CD": "00",
+		"TDFKN_NM": "テスト都道府県",
+		"SKCHSN_CD": "000000",
+		"SKCHSN_NM": "テスト市町村",
+		"KFN_NUM": "0",
+		"AMeDAS_WD": "00"
+	}]`)
+	sokuteiDataStructOmitOptional = SokuteiData{
+		&HourlySokuteiData{
+			SokuteikyokuCode:     "00000000",
+			AMeDASCode:           "00000",
+			SokuteiNengappi:      "00000000",
+			SokuteiJikoku:        "00",
+			SokuteikyokuName:     "テスト観測所",
+			SokuteiType:          "0",
+			TodofukenCode:        "00",
+			TodofukenName:        "テスト都道府県",
+			SokuteiShichosonCode: "000000",
+			SokuteiShichosonName: "テスト市町村",
+			KafunNum:             0,
+			AMeDASWindDirect:     "00",
+		},
+	}
+	validSearchParam = &SearchParam{
+		StartYM:          "000000",
+		EndYM:            "000001",
+		TodofukenCode:    "01",
+		SokuteikyokuCode: "00000000",
+	}
+)
 
 func encodeUTF8ToSJIS(t *testing.T, b []byte) ([]byte, int) {
 	t.Helper()
-
 	encoder := japanese.ShiftJIS.NewEncoder()
 	sjisStr, sjisLen, _ := transform.Bytes(encoder, b)
-
 	return sjisStr, sjisLen
 }
 
 func decodeBodyResponseFixture(t *testing.T, responseBody []byte) *http.Response {
 	t.Helper()
-
-	encoder := japanese.ShiftJIS.NewEncoder()
-	sjisStr, sjisLen, _ := transform.Bytes(encoder, responseBody)
-
+	sjisStr, sjisLen := encodeUTF8ToSJIS(t, responseBody)
 	return &http.Response{
 		Status:        "OK",
 		StatusCode:    http.StatusOK,
@@ -57,8 +82,6 @@ func decodeBodyResponseFixture(t *testing.T, responseBody []byte) *http.Response
 }
 
 func TestNewClient(t *testing.T) {
-	defaultURL, _ := url.Parse(DefaultEndpoint)
-
 	type args struct {
 		endpoint string
 	}
@@ -114,15 +137,6 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_newRequest(t *testing.T) {
-	ctx := context.Background()
-	endpointURL, _ := url.Parse(DefaultEndpoint)
-	fullQueryURL, _ := url.Parse(
-		DefaultEndpoint + "/search?End_YM=000001&SKT_CD=00000000&Start_YM=000000&TDFKN_CD=01",
-	)
-	omitQueryURL, _ := url.Parse(
-		DefaultEndpoint + "/search?Start_YM=000000&TDFKN_CD=01",
-	)
-
 	type args struct {
 		method  string
 		apiPath string
@@ -196,7 +210,7 @@ func TestClient_newRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				URL:        endpointURL,
+				URL:        defaultURL,
 				HTTPClient: http.DefaultClient,
 			}
 			got, err := c.newRequest(ctx, tt.args.method, tt.args.apiPath, tt.args.params, tt.args.body)
@@ -227,39 +241,11 @@ func Test_decodeBody(t *testing.T) {
 			args: args{
 				resp: decodeBodyResponseFixture(
 					t,
-					[]byte(`[{
-						"SKT_CD": "00000000",
-						"AMeDAS_CD": "00000",
-						"SKT_NNGP": "00000000",
-						"SKT_HH": "00",
-						"SKT_NM": "テスト観測所",
-						"SKT_TYPE": "0",
-						"TDFKN_CD": "00",
-						"TDFKN_NM": "テスト都道府県",
-						"SKCHSN_CD": "000000",
-						"SKCHSN_NM": "テスト市町村",
-						"KFN_NUM": "0",
-						"AMeDAS_WD": "00",
-					}]`),
+					sokuteiDataByteOmitOptional,
 				),
 				out: SokuteiData{},
 			},
-			want: SokuteiData{
-				&HourlySokuteiData{
-					SokuteikyokuCode:     "00000000",
-					AMeDASCode:           "00000",
-					SokuteiNengappi:      "00000000",
-					SokuteiJikoku:        "00",
-					SokuteikyokuName:     "テスト観測所",
-					SokuteiType:          "0",
-					TodofukenCode:        "00",
-					TodofukenName:        "テスト都道府県",
-					SokuteiShichosonCode: "000000",
-					SokuteiShichosonName: "テスト市町村",
-					KafunNum:             0,
-					AMeDASWindDirect:     "00",
-				},
-			},
+			want: sokuteiDataStructOmitOptional,
 		},
 	}
 	for _, tt := range tests {
@@ -277,9 +263,7 @@ func Test_decodeBody(t *testing.T) {
 }
 
 func TestClient_Search(t *testing.T) {
-	ctx := context.Background()
 	sjisStr, _ := encodeUTF8ToSJIS(t, sokuteiDataByteOmitOptional)
-
 	type fields struct {
 		mockServerHandlerFunc func(w http.ResponseWriter, r *http.Request)
 	}
@@ -302,29 +286,9 @@ func TestClient_Search(t *testing.T) {
 				},
 			},
 			args: args{
-				param: &SearchParam{
-					StartYM:          "000000",
-					EndYM:            "000001",
-					TodofukenCode:    "01",
-					SokuteikyokuCode: "00000000",
-				},
+				param: validSearchParam,
 			},
-			want: SokuteiData{
-				&HourlySokuteiData{
-					SokuteikyokuCode:     "00000000",
-					AMeDASCode:           "00000",
-					SokuteiNengappi:      "00000000",
-					SokuteiJikoku:        "00",
-					SokuteikyokuName:     "テスト観測所",
-					SokuteiType:          "0",
-					TodofukenCode:        "00",
-					TodofukenName:        "テスト都道府県",
-					SokuteiShichosonCode: "000000",
-					SokuteiShichosonName: "テスト市町村",
-					KafunNum:             0,
-					AMeDASWindDirect:     "00",
-				},
-			},
+			want: sokuteiDataStructOmitOptional,
 		},
 		{
 			name: "error case: invalid parameter",
@@ -347,12 +311,7 @@ func TestClient_Search(t *testing.T) {
 				},
 			},
 			args: args{
-				param: &SearchParam{
-					StartYM:          "000000",
-					EndYM:            "000001",
-					TodofukenCode:    "01",
-					SokuteikyokuCode: "00000000",
-				},
+				param: validSearchParam,
 			},
 			wantErr: true,
 		},

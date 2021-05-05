@@ -42,8 +42,7 @@ func encodeUTF8ToSJIS(t *testing.T, b []byte) ([]byte, int) {
 func decodeBodyResponseFixture(t *testing.T, responseBody []byte) *http.Response {
 	t.Helper()
 
-	encoder := japanese.ShiftJIS.NewEncoder()
-	sjisStr, sjisLen, _ := transform.Bytes(encoder, responseBody)
+	sjisStr, sjisLen := encodeUTF8ToSJIS(t, responseBody)
 
 	return &http.Response{
 		Status:        "OK",

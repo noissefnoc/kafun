@@ -88,6 +88,104 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
+func TestClient_newRequest(t *testing.T) {
+	ctx := context.Background()
+	endpointURL, _ := url.Parse(DefaultEndpoint)
+	fullQueryURL, _ := url.Parse(
+		DefaultEndpoint + "/search?End_YM=000001&SKT_CD=00000000&Start_YM=000000&TDFKN_CD=01",
+	)
+	omitQueryURL, _ := url.Parse(
+		DefaultEndpoint + "/search?Start_YM=000000&TDFKN_CD=01",
+	)
+
+	type args struct {
+		method  string
+		apiPath string
+		params  map[string]string
+		body    io.Reader
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *http.Request
+		wantErr bool
+	}{
+		{
+			name: "standard case: full query given",
+			args: args{
+				method:  "GET",
+				apiPath: "/search",
+				params: map[string]string{
+					"Start_YM": "000000",
+					"End_YM":   "000001",
+					"TDFKN_CD": "01",
+					"SKT_CD":   "00000000",
+				},
+			},
+			want: (&http.Request{
+				Method:     "GET",
+				URL:        fullQueryURL,
+				Proto:      "HTTP/1.1",
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Header: map[string][]string{
+					"User-Agent": {
+						userAgent,
+					},
+				},
+				Host: "kafun.env.go.jp",
+			}).WithContext(ctx),
+		},
+		{
+			name: "standard case: omit optional query",
+			args: args{
+				method:  "GET",
+				apiPath: "/search",
+				params: map[string]string{
+					"Start_YM": "000000",
+					"TDFKN_CD": "01",
+				},
+			},
+			want: (&http.Request{
+				Method:     "GET",
+				URL:        omitQueryURL,
+				Proto:      "HTTP/1.1",
+				ProtoMajor: 1,
+				ProtoMinor: 1,
+				Header: map[string][]string{
+					"User-Agent": {
+						userAgent,
+					},
+				},
+				Host: "kafun.env.go.jp",
+			}).WithContext(ctx),
+		},
+		{
+			name: "error case: invalid method request",
+			args: args{
+				method: "無効",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Client{
+				URL:        endpointURL,
+				HTTPClient: http.DefaultClient,
+			}
+			got, err := c.newRequest(ctx, tt.args.method, tt.args.apiPath, tt.args.params, tt.args.body)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("newRequest() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newRequest() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_decodeBody(t *testing.T) {
 	type args struct {
 		resp *http.Response

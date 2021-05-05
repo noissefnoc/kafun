@@ -2,6 +2,8 @@ package kafun
 
 import (
 	"bytes"
+	"context"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -9,7 +11,6 @@ import (
 	"testing"
 
 	"golang.org/x/text/encoding/japanese"
-
 	"golang.org/x/text/transform"
 )
 

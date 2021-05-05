@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -13,6 +14,30 @@ import (
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
+
+var sokuteiDataByteOmitOptional = []byte(`[{
+	"SKT_CD": "00000000",
+	"AMeDAS_CD": "00000",
+	"SKT_NNGP": "00000000",
+	"SKT_HH": "00",
+	"SKT_NM": "テスト観測所",
+	"SKT_TYPE": "0",
+	"TDFKN_CD": "00",
+	"TDFKN_NM": "テスト都道府県",
+	"SKCHSN_CD": "000000",
+	"SKCHSN_NM": "テスト市町村",
+	"KFN_NUM": "0",
+	"AMeDAS_WD": "00"
+}]`)
+
+func encodeUTF8ToSJIS(t *testing.T, b []byte) ([]byte, int) {
+	t.Helper()
+
+	encoder := japanese.ShiftJIS.NewEncoder()
+	sjisStr, sjisLen, _ := transform.Bytes(encoder, b)
+
+	return sjisStr, sjisLen
+}
 
 func decodeBodyResponseFixture(t *testing.T, responseBody []byte) *http.Response {
 	t.Helper()
@@ -235,7 +260,6 @@ func Test_decodeBody(t *testing.T) {
 					AMeDASWindDirect:     "00",
 				},
 			},
-			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -247,6 +271,108 @@ func Test_decodeBody(t *testing.T) {
 
 			if err != nil && !reflect.DeepEqual(tt.args.out, tt.want) {
 				t.Errorf("decodeBody() got = %v, want %v", tt.args.out, tt.want)
+			}
+		})
+	}
+}
+
+func TestClient_Search(t *testing.T) {
+	ctx := context.Background()
+	sjisStr, _ := encodeUTF8ToSJIS(t, sokuteiDataByteOmitOptional)
+
+	type fields struct {
+		mockServerHandlerFunc func(w http.ResponseWriter, r *http.Request)
+	}
+	type args struct {
+		param *SearchParam
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    SokuteiData
+		wantErr bool
+	}{
+		{
+			name: "standard case",
+			fields: fields{
+				mockServerHandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write(sjisStr)
+				},
+			},
+			args: args{
+				param: &SearchParam{
+					StartYM:          "000000",
+					EndYM:            "000001",
+					TodofukenCode:    "01",
+					SokuteikyokuCode: "00000000",
+				},
+			},
+			want: SokuteiData{
+				&HourlySokuteiData{
+					SokuteikyokuCode:     "00000000",
+					AMeDASCode:           "00000",
+					SokuteiNengappi:      "00000000",
+					SokuteiJikoku:        "00",
+					SokuteikyokuName:     "テスト観測所",
+					SokuteiType:          "0",
+					TodofukenCode:        "00",
+					TodofukenName:        "テスト都道府県",
+					SokuteiShichosonCode: "000000",
+					SokuteiShichosonName: "テスト市町村",
+					KafunNum:             0,
+					AMeDASWindDirect:     "00",
+				},
+			},
+		},
+		{
+			name: "error case: invalid parameter",
+			fields: fields{
+				mockServerHandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write(sjisStr)
+				},
+			},
+			args: args{
+				param: &SearchParam{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error case: server returns bad request",
+			fields: fields{
+				mockServerHandlerFunc: func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusBadRequest)
+				},
+			},
+			args: args{
+				param: &SearchParam{
+					StartYM:          "000000",
+					EndYM:            "000001",
+					TodofukenCode:    "01",
+					SokuteikyokuCode: "00000000",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(tt.fields.mockServerHandlerFunc))
+			defer testServer.Close()
+			testServerURL, _ := url.Parse(testServer.URL)
+			c := &Client{
+				URL:        testServerURL,
+				HTTPClient: http.DefaultClient,
+			}
+			got, err := c.Search(ctx, tt.args.param)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Search() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Search() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

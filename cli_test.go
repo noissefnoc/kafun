@@ -93,7 +93,7 @@ func TestCLI_Run(t *testing.T) {
 				t.Errorf("Run() stdout = %v, want %v", stdOut.String(), tt.want.stdout)
 			}
 			if errOut.String() != tt.want.errout {
-				t.Errorf("Run() errout = %v, want %v", errOut.String(), tt.want.stdout)
+				t.Errorf("Run() errout = %v, want %v", errOut.String(), tt.want.errout)
 			}
 		})
 	}

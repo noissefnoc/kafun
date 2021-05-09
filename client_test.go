@@ -82,6 +82,7 @@ func decodeBodyResponseFixture(t *testing.T, responseBody []byte) *http.Response
 }
 
 func TestNewClient(t *testing.T) {
+	testURL, _ := url.Parse(DefaultEndpoint)
 	type args struct {
 		endpoint string
 	}
@@ -97,7 +98,7 @@ func TestNewClient(t *testing.T) {
 				endpoint: DefaultEndpoint,
 			},
 			want: &Client{
-				URL:        defaultURL,
+				URL:        testURL,
 				HTTPClient: http.DefaultClient,
 			},
 			wantErr: false,
@@ -108,7 +109,7 @@ func TestNewClient(t *testing.T) {
 				endpoint: "",
 			},
 			want: &Client{
-				URL:        defaultURL,
+				URL:        testURL,
 				HTTPClient: http.DefaultClient,
 			},
 			wantErr: false,

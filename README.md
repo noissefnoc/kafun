@@ -2,6 +2,8 @@
 
 [![GitHub Actions](https://github.com/noissefnoc/kafun/workflows/CI/badge.svg)](https://github.com/noissefnoc/kafun/actions?workflow=CI)
 
+*DEPRECATED: [環境省花粉観測システム（愛称：はなこさん）事業の廃止に伴う花粉自動計測器を用いた花粉観測の終了について - 2021年12月24日](https://www.env.go.jp/press/110339.html)にあるように、2022年以降該当のAPIサービスが停止されたため、このコマンドは利用できません。*
+
 Golang製の [環境庁花粉観測システムAPI](https://kafun.env.go.jp/apiManual) のクライアントです。
 
 **アルファ版なので様々な変更の可能性があります**
